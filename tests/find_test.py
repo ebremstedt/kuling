@@ -2,7 +2,7 @@ import pytest
 from pathlib import Path
 import tempfile
 import shutil
-from kuling import find_matching_paths
+from kuling import find_files
 
 
 class TestNonWildcardPaths:
@@ -10,7 +10,7 @@ class TestNonWildcardPaths:
         tmp = Path(tempfile.mkdtemp())
         (tmp / "root1.txt").touch()
 
-        result = find_matching_paths(str(tmp / "root1.txt"))
+        result = find_files(str(tmp / "root1.txt"))
         assert len(result) == 1
         assert result[0].name == "root1.txt"
         assert result[0].is_file()
@@ -23,7 +23,7 @@ class TestNonWildcardPaths:
         (tmp / "dir1").mkdir()
         (tmp / "dir1" / "file1.txt").touch()
 
-        result = find_matching_paths(str(tmp / "dir1" / "file1.txt"))
+        result = find_files(str(tmp / "dir1" / "file1.txt"))
         assert len(result) == 1
         assert result[0].name == "file1.txt"
         assert result[0].parent.name == "dir1"
@@ -34,7 +34,7 @@ class TestNonWildcardPaths:
     def test_nonexistent_file_no_raise(self):
         tmp = Path(tempfile.mkdtemp())
 
-        result = find_matching_paths(str(tmp / "nonexistent.txt"))
+        result = find_files(str(tmp / "nonexistent.txt"))
         assert result == []
         assert isinstance(result, list)
         assert len(result) == 0
@@ -45,9 +45,7 @@ class TestNonWildcardPaths:
         tmp = Path(tempfile.mkdtemp())
 
         with pytest.raises(FileNotFoundError, match="No files found"):
-            find_matching_paths(
-                str(tmp / "nonexistent.txt"), raise_error_if_no_match=True
-            )
+            find_files(str(tmp / "nonexistent.txt"), raise_error_if_no_match=True)
 
         shutil.rmtree(tmp)
 
@@ -55,7 +53,7 @@ class TestNonWildcardPaths:
         tmp = Path(tempfile.mkdtemp())
         (tmp / "empty_dir").mkdir()
 
-        result = find_matching_paths(str(tmp / "empty_dir"))
+        result = find_files(str(tmp / "empty_dir"))
         assert result == []
         assert isinstance(result, list)
 
@@ -68,7 +66,7 @@ class TestNonWildcardPaths:
         (tmp / "a" / "b" / "c").mkdir()
         (tmp / "a" / "b" / "c" / "deep.txt").touch()
 
-        result = find_matching_paths(str(tmp / "a" / "b" / "c" / "deep.txt"))
+        result = find_files(str(tmp / "a" / "b" / "c" / "deep.txt"))
         assert len(result) == 1
         assert result[0].name == "deep.txt"
         assert "a" in result[0].parts
@@ -83,9 +81,9 @@ class TestNonWildcardPaths:
         (tmp / "file_with_underscores.txt").touch()
         (tmp / "file.multiple.dots.txt").touch()
 
-        result1 = find_matching_paths(str(tmp / "file-with-dashes.txt"))
-        result2 = find_matching_paths(str(tmp / "file_with_underscores.txt"))
-        result3 = find_matching_paths(str(tmp / "file.multiple.dots.txt"))
+        result1 = find_files(str(tmp / "file-with-dashes.txt"))
+        result2 = find_files(str(tmp / "file_with_underscores.txt"))
+        result3 = find_files(str(tmp / "file.multiple.dots.txt"))
 
         assert len(result1) == 1
         assert len(result2) == 1
@@ -104,7 +102,7 @@ class TestSimpleWildcards:
         (tmp / "dir1" / "file1.txt").touch()
         (tmp / "dir1" / "file2.txt").touch()
 
-        result = find_matching_paths(str(tmp / "dir1" / "*.txt"))
+        result = find_files(str(tmp / "dir1" / "*.txt"))
         names = {f.name for f in result}
         assert names == {"file1.txt", "file2.txt"}
         assert len(result) == 2
@@ -120,7 +118,7 @@ class TestSimpleWildcards:
         (tmp / "logs" / "2024" / "app.log").touch()
         (tmp / "logs" / "2024" / "error.log").touch()
 
-        result = find_matching_paths(str(tmp / "logs" / "2024" / "*.log"))
+        result = find_files(str(tmp / "logs" / "2024" / "*.log"))
         names = {f.name for f in result}
         assert names == {"app.log", "error.log"}
         assert all(f.suffix == ".log" for f in result)
@@ -131,7 +129,7 @@ class TestSimpleWildcards:
     def test_asterisk_no_matches_no_raise(self):
         tmp = Path(tempfile.mkdtemp())
 
-        result = find_matching_paths(str(tmp / "*.xyz"))
+        result = find_files(str(tmp / "*.xyz"))
         assert result == []
         assert isinstance(result, list)
 
@@ -141,7 +139,7 @@ class TestSimpleWildcards:
         tmp = Path(tempfile.mkdtemp())
 
         with pytest.raises(FileNotFoundError, match="No files found matching pattern"):
-            find_matching_paths(str(tmp / "*.xyz"), raise_error_if_no_match=True)
+            find_files(str(tmp / "*.xyz"), raise_error_if_no_match=True)
 
         shutil.rmtree(tmp)
 
@@ -152,7 +150,7 @@ class TestSimpleWildcards:
         (tmp / "file3.py").touch()
         (tmp / "subdir").mkdir()
 
-        result = find_matching_paths(str(tmp / "*"))
+        result = find_files(str(tmp / "*"))
         assert len(result) == 3
         names = {f.name for f in result}
         assert names == {"file1.txt", "file2.log", "file3.py"}
@@ -166,7 +164,7 @@ class TestSimpleWildcards:
         (tmp / "test_file2.txt").touch()
         (tmp / "other_file.txt").touch()
 
-        result = find_matching_paths(str(tmp / "test_*.txt"))
+        result = find_files(str(tmp / "test_*.txt"))
         names = {f.name for f in result}
         assert names == {"test_file1.txt", "test_file2.txt"}
         assert len(result) == 2
@@ -179,7 +177,7 @@ class TestSimpleWildcards:
         (tmp / "report_feb.csv").touch()
         (tmp / "summary_jan.csv").touch()
 
-        result = find_matching_paths(str(tmp / "report_*.csv"))
+        result = find_files(str(tmp / "report_*.csv"))
         names = {f.name for f in result}
         assert names == {"report_jan.csv", "report_feb.csv"}
         assert all(f.name.startswith("report_") for f in result)
@@ -193,7 +191,7 @@ class TestQuestionMarkWildcard:
         (tmp / "root1.txt").touch()
         (tmp / "root2.txt").touch()
 
-        result = find_matching_paths(str(tmp / "root?.txt"))
+        result = find_files(str(tmp / "root?.txt"))
         names = {f.name for f in result}
         assert names == {"root1.txt", "root2.txt"}
         assert len(result) == 2
@@ -207,7 +205,7 @@ class TestQuestionMarkWildcard:
         (tmp / "test2.py").touch()
         (tmp / "test3.py").touch()
 
-        result = find_matching_paths(str(tmp / "test?.py"))
+        result = find_files(str(tmp / "test?.py"))
         names = {f.name for f in result}
         assert names == {"test1.py", "test2.py", "test3.py"}
         assert all(f.suffix == ".py" for f in result)
@@ -220,7 +218,7 @@ class TestQuestionMarkWildcard:
         (tmp / "file12.txt").touch()
         (tmp / "file123.txt").touch()
 
-        result = find_matching_paths(str(tmp / "file?.txt"))
+        result = find_files(str(tmp / "file?.txt"))
         names = {f.name for f in result}
         assert names == {"file1.txt"}
         assert len(result) == 1
@@ -233,7 +231,7 @@ class TestQuestionMarkWildcard:
         (tmp / "cd.txt").touch()
         (tmp / "xyz.txt").touch()
 
-        result = find_matching_paths(str(tmp / "??.txt"))
+        result = find_files(str(tmp / "??.txt"))
         names = {f.name for f in result}
         assert names == {"ab.txt", "cd.txt"}
         assert all(len(f.stem) == 2 for f in result)
@@ -248,7 +246,7 @@ class TestCharacterSetWildcard:
         (tmp / "test2.py").touch()
         (tmp / "test3.py").touch()
 
-        result = find_matching_paths(str(tmp / "test[12].py"))
+        result = find_files(str(tmp / "test[12].py"))
         names = {f.name for f in result}
         assert names == {"test1.py", "test2.py"}
         assert len(result) == 2
@@ -260,7 +258,7 @@ class TestCharacterSetWildcard:
         (tmp / "root1.txt").touch()
         (tmp / "root2.txt").touch()
 
-        result = find_matching_paths(str(tmp / "root[12].txt"))
+        result = find_files(str(tmp / "root[12].txt"))
         names = {f.name for f in result}
         assert names == {"root1.txt", "root2.txt"}
 
@@ -273,7 +271,7 @@ class TestCharacterSetWildcard:
         (tmp / "filec.txt").touch()
         (tmp / "filed.txt").touch()
 
-        result = find_matching_paths(str(tmp / "file[abc].txt"))
+        result = find_files(str(tmp / "file[abc].txt"))
         names = {f.name for f in result}
         assert names == {"filea.txt", "fileb.txt", "filec.txt"}
         assert len(result) == 3
@@ -286,7 +284,7 @@ class TestCharacterSetWildcard:
         (tmp / "test2.py").touch()
         (tmp / "test3.py").touch()
 
-        result = find_matching_paths(str(tmp / "test[!1].py"))
+        result = find_files(str(tmp / "test[!1].py"))
         names = {f.name for f in result}
         assert names == {"test2.py", "test3.py"}
 
@@ -302,7 +300,7 @@ class TestMultiLevelWildcards:
         (tmp / "logs" / "2024" / "app.log").touch()
         (tmp / "logs" / "2025" / "app.log").touch()
 
-        result = find_matching_paths(str(tmp / "logs" / "*" / "app.log"))
+        result = find_files(str(tmp / "logs" / "*" / "app.log"))
         names = {f.name for f in result}
         assert names == {"app.log"}
         assert len(result) == 2
@@ -318,7 +316,7 @@ class TestMultiLevelWildcards:
         (tmp / "logs" / "2024" / "app.log").touch()
         (tmp / "logs" / "2024" / "error.log").touch()
 
-        result = find_matching_paths(str(tmp / "logs" / "*" / "*.log"))
+        result = find_files(str(tmp / "logs" / "*" / "*.log"))
         names = {f.name for f in result}
         assert "app.log" in names
         assert "error.log" in names
@@ -333,7 +331,7 @@ class TestMultiLevelWildcards:
         (tmp / "deep" / "level1" / "level2").mkdir()
         (tmp / "deep" / "level1" / "level2" / "nested.txt").touch()
 
-        result = find_matching_paths(str(tmp / "deep" / "**" / "*.txt"))
+        result = find_files(str(tmp / "deep" / "**" / "*.txt"))
         names = {f.name for f in result}
         assert "nested.txt" in names
         assert all(f.is_file() for f in result)
@@ -350,7 +348,7 @@ class TestMultiLevelWildcards:
         (tmp / "level1" / "level2" / "level3").mkdir()
         (tmp / "level1" / "level2" / "level3" / "file3.txt").touch()
 
-        result = find_matching_paths(str(tmp / "**" / "*.txt"))
+        result = find_files(str(tmp / "**" / "*.txt"))
         names = {f.name for f in result}
         assert names == {"root.txt", "file1.txt", "file2.txt", "file3.txt"}
         assert len(result) == 4
@@ -368,7 +366,7 @@ class TestMultiLevelWildcards:
         (tmp / "dir1" / "sub2" / "file2.txt").touch()
         (tmp / "dir2" / "sub3" / "file3.txt").touch()
 
-        result = find_matching_paths(str(tmp / "*" / "*" / "*.txt"))
+        result = find_files(str(tmp / "*" / "*" / "*.txt"))
         names = {f.name for f in result}
         assert names == {"file1.txt", "file2.txt", "file3.txt"}
         assert len(result) == 3
@@ -381,7 +379,7 @@ class TestErrorHandling:
         tmp = Path(tempfile.mkdtemp())
 
         with pytest.raises(NotADirectoryError, match="Base directory does not exist"):
-            find_matching_paths(str(tmp / "nonexistent" / "*.txt"))
+            find_files(str(tmp / "nonexistent" / "*.txt"))
 
         shutil.rmtree(tmp)
 
@@ -389,7 +387,7 @@ class TestErrorHandling:
         tmp = Path(tempfile.mkdtemp())
 
         with pytest.raises(NotADirectoryError, match="Base directory does not exist"):
-            find_matching_paths(str(tmp / "a" / "b" / "c" / "*.txt"))
+            find_files(str(tmp / "a" / "b" / "c" / "*.txt"))
 
         shutil.rmtree(tmp)
 
@@ -398,7 +396,7 @@ class TestErrorHandling:
         (tmp / "file.txt").touch()
 
         with pytest.raises(NotADirectoryError, match="Base path is not a directory"):
-            find_matching_paths(str(tmp / "file.txt" / "*.txt"))
+            find_files(str(tmp / "file.txt" / "*.txt"))
 
         shutil.rmtree(tmp)
 
@@ -407,7 +405,7 @@ class TestErrorHandling:
         (tmp / "existing").mkdir()
 
         with pytest.raises(NotADirectoryError, match="Base directory does not exist"):
-            find_matching_paths(str(tmp / "existing" / "missing" / "*.txt"))
+            find_files(str(tmp / "existing" / "missing" / "*.txt"))
 
         shutil.rmtree(tmp)
 
@@ -417,7 +415,7 @@ class TestReturnTypes:
         tmp = Path(tempfile.mkdtemp())
         (tmp / "file.txt").touch()
 
-        result = find_matching_paths(str(tmp / "*.txt"))
+        result = find_files(str(tmp / "*.txt"))
         assert isinstance(result, list)
         assert len(result) > 0
 
@@ -426,7 +424,7 @@ class TestReturnTypes:
     def test_empty_list_on_no_match(self):
         tmp = Path(tempfile.mkdtemp())
 
-        result = find_matching_paths(str(tmp / "*.nonexistent"))
+        result = find_files(str(tmp / "*.nonexistent"))
         assert result == []
         assert isinstance(result, list)
         assert len(result) == 0
@@ -437,7 +435,7 @@ class TestReturnTypes:
         tmp = Path(tempfile.mkdtemp())
         (tmp / "file.txt").touch()
 
-        result = find_matching_paths(str(tmp / "*.txt"))
+        result = find_files(str(tmp / "*.txt"))
         for item in result:
             assert isinstance(item, Path)
             assert hasattr(item, "name")
@@ -450,7 +448,7 @@ class TestReturnTypes:
         tmp = Path(tempfile.mkdtemp())
         (tmp / "file.txt").touch()
 
-        result = find_matching_paths(str(tmp / "*.txt"))
+        result = find_files(str(tmp / "*.txt"))
         for item in result:
             assert item.is_absolute()
 
@@ -461,7 +459,7 @@ class TestRaiseErrorFlag:
     def test_raise_false_returns_empty_on_no_match(self):
         tmp = Path(tempfile.mkdtemp())
 
-        result = find_matching_paths(str(tmp / "*.xyz"), raise_error_if_no_match=False)
+        result = find_files(str(tmp / "*.xyz"), raise_error_if_no_match=False)
         assert result == []
         assert isinstance(result, list)
 
@@ -471,7 +469,7 @@ class TestRaiseErrorFlag:
         tmp = Path(tempfile.mkdtemp())
 
         with pytest.raises(FileNotFoundError):
-            find_matching_paths(str(tmp / "*.xyz"), raise_error_if_no_match=True)
+            find_files(str(tmp / "*.xyz"), raise_error_if_no_match=True)
 
         shutil.rmtree(tmp)
 
@@ -479,7 +477,7 @@ class TestRaiseErrorFlag:
         tmp = Path(tempfile.mkdtemp())
         (tmp / "file.txt").touch()
 
-        result = find_matching_paths(str(tmp / "*.txt"), raise_error_if_no_match=True)
+        result = find_files(str(tmp / "*.txt"), raise_error_if_no_match=True)
         assert len(result) > 0
         assert isinstance(result, list)
 
@@ -488,8 +486,8 @@ class TestRaiseErrorFlag:
     def test_raise_false_is_default(self):
         tmp = Path(tempfile.mkdtemp())
 
-        result1 = find_matching_paths(str(tmp / "*.xyz"))
-        result2 = find_matching_paths(str(tmp / "*.xyz"), raise_error_if_no_match=False)
+        result1 = find_files(str(tmp / "*.xyz"))
+        result2 = find_files(str(tmp / "*.xyz"), raise_error_if_no_match=False)
         assert result1 == result2 == []
 
         shutil.rmtree(tmp)
@@ -498,7 +496,7 @@ class TestRaiseErrorFlag:
         tmp = Path(tempfile.mkdtemp())
 
         with pytest.raises(FileNotFoundError):
-            find_matching_paths(str(tmp / "missing.txt"), raise_error_if_no_match=True)
+            find_files(str(tmp / "missing.txt"), raise_error_if_no_match=True)
 
         shutil.rmtree(tmp)
 
@@ -512,7 +510,7 @@ class TestComplexPatterns:
         (tmp / "dir1" / "file2.txt").touch()
         (tmp / "dir2" / "file3.txt").touch()
 
-        result = find_matching_paths(str(tmp / "dir?" / "file?.txt"))
+        result = find_files(str(tmp / "dir?" / "file?.txt"))
         names = {f.name for f in result}
         expected = {"file1.txt", "file2.txt", "file3.txt"}
         assert names == expected
@@ -528,7 +526,7 @@ class TestComplexPatterns:
         (tmp / "dir1" / "sub").mkdir()
         (tmp / "dir1" / "sub" / "c.txt").touch()
 
-        result = find_matching_paths(str(tmp / "**" / "*.txt"))
+        result = find_files(str(tmp / "**" / "*.txt"))
         assert len(result) >= 3
         names = {f.name for f in result}
         assert "a.txt" in names
@@ -543,7 +541,7 @@ class TestComplexPatterns:
         (tmp / "test2_report.csv").touch()
         (tmp / "test3_summary.csv").touch()
 
-        result = find_matching_paths(str(tmp / "test[12]_*.csv"))
+        result = find_files(str(tmp / "test[12]_*.csv"))
         names = {f.name for f in result}
         assert names == {"test1_report.csv", "test2_report.csv"}
 
@@ -555,7 +553,7 @@ class TestComplexPatterns:
         (tmp / "v2_data.txt").touch()
         (tmp / "v10_data.txt").touch()
 
-        result = find_matching_paths(str(tmp / "v?_*.txt"))
+        result = find_files(str(tmp / "v?_*.txt"))
         names = {f.name for f in result}
         assert names == {"v1_data.txt", "v2_data.txt"}
         assert len(result) == 2
@@ -568,7 +566,7 @@ class TestComplexPatterns:
         (tmp / "document.pdf").touch()
         (tmp / "document.docx").touch()
 
-        result = find_matching_paths(str(tmp / "document.*"))
+        result = find_files(str(tmp / "document.*"))
         assert len(result) == 3
         names = {f.name for f in result}
         assert names == {"document.txt", "document.pdf", "document.docx"}

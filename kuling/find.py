@@ -3,9 +3,7 @@ from pathlib import Path
 WILDCARD_CHARS = {"*", "?", "["}
 
 
-def find_matching_paths(
-    path_pattern: str, raise_error_if_no_match: bool = False
-) -> list[Path]:
+def find_files(path_pattern: str, raise_error_if_no_match: bool = False) -> list[Path]:
     try:
         path = Path(path_pattern)
     except (ValueError, OSError) as e:
@@ -44,29 +42,6 @@ def find_matching_paths(
         raise FileNotFoundError(f"No files found matching pattern: {path_pattern}")
 
     return matches
-
-
-def move_file(
-    source: str | Path,
-    destination: str | Path,
-    delete_original: bool = False,
-) -> Path:
-    source = Path(source)
-    destination = Path(destination)
-
-    if not source.exists():
-        raise FileNotFoundError(f"File not found: {source}")
-
-    if destination.is_dir():
-        destination = destination / source.name
-
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(src=source, dst=destination)
-
-    if delete_original:
-        source.unlink()
-
-    return destination
 
 
 def delete_file(path: str | Path) -> bool:
