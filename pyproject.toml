@@ -1,0 +1,18 @@
+[project]
+name = "kuling"
+version = "1.0.0"
+authors = [
+  { name="Erik Bremstedt", email="erik@bremstedt.se" },
+]
+description = "Move files around"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/ebremstedt/kuling"
+Issues = "https://github.com/ebremstedt/kuling/issues"
